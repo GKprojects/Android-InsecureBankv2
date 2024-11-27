@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      API_KEY:   # Store your API key securely in GitHub secrets
+      API_KEY: ${{ secrets.API_KEY }} # Store your API key securely in GitHub secrets
       FILE_PATH: InsecureBank.apk
       UPLOAD_URL: 'http://103.182.120.13:8000/api/v1/upload'
       SCAN_URL: 'http://103.182.120.13:8000/api/v1/scan'
