@@ -3,14 +3,14 @@ name: APK Scan Pipeline
 on:
   push:
     branches:
-      - main  # Or your desired branch
+      - master  # Or your desired branch
 
 jobs:
   apk-scan:
     runs-on: ubuntu-latest
 
     env:
-      API_KEY: a74042b542243cb1e9f14367d966803917a61c2629d0716db86430d7f33ba031  # Store your API key securely in GitHub secrets
+      API_KEY:   # Store your API key securely in GitHub secrets
       FILE_PATH: InsecureBank.apk
       UPLOAD_URL: 'http://103.182.120.13:8000/api/v1/upload'
       SCAN_URL: 'http://103.182.120.13:8000/api/v1/scan'
