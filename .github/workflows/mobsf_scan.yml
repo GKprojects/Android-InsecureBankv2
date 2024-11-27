@@ -1,0 +1,79 @@
+name: APK Scan Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Or your desired branch
+
+jobs:
+  apk-scan:
+    runs-on: ubuntu-latest
+
+    env:
+      API_KEY: a74042b542243cb1e9f14367d966803917a61c2629d0716db86430d7f33ba031  # Store your API key securely in GitHub secrets
+      FILE_PATH: InsecureBank.apk
+      UPLOAD_URL: 'http://103.182.120.13:8000/api/v1/upload'
+      SCAN_URL: 'http://103.182.120.13:8000/api/v1/scan'
+      PDF_REPORT_URL: 'http://103.182.120.13:8000/api/v1/download_pdf'
+      JSON_REPORT_URL: 'http://103.182.120.13:8000/api/v1/report_json'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: List Current Directory
+        run: |
+          pwd
+          ls -lhrt
+
+      - name: Upload APK File and Get Hash Value
+        id: upload
+        run: |
+          echo "Uploading APK file..."
+          HASH=$(curl --silent -F "file=@$FILE_PATH" $UPLOAD_URL -H "Authorization: $API_KEY" | jq -r '.hash')
+          echo "File hash: $HASH"
+          echo "hash=$HASH" >> $GITHUB_ENV
+        env:
+          FILE_PATH: ${{ env.FILE_PATH }}
+          UPLOAD_URL: ${{ env.UPLOAD_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
+
+      - name: Scan APK File
+        id: scan
+        run: |
+          echo "Scanning APK file..."
+          curl -X POST --url $SCAN_URL --data "hash=${{ env.hash }}" -H "Authorization: $API_KEY" -o scan_response.json
+          echo "Scan completed."
+        env:
+          SCAN_URL: ${{ env.SCAN_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
+          hash: ${{ env.hash }}
+
+      - name: Download PDF Report
+        run: |
+          echo "Downloading PDF report..."
+          curl -X POST --url $PDF_REPORT_URL --data "hash=${{ env.hash }}" -H "Authorization: $API_KEY" -o report.pdf
+          echo "PDF report downloaded."
+        env:
+          PDF_REPORT_URL: ${{ env.PDF_REPORT_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
+          hash: ${{ env.hash }}
+
+      - name: Download JSON Report
+        run: |
+          echo "Downloading JSON report..."
+          curl -X POST --url $JSON_REPORT_URL --data "hash=${{ env.hash }}" -H "Authorization: $API_KEY" -o report.json
+          echo "JSON report downloaded."
+        env:
+          JSON_REPORT_URL: ${{ env.JSON_REPORT_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
+          hash: ${{ env.hash }}
+
+      - name: Upload Reports as Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: reports
+          path: |
+            scan_response.json
+            report.pdf
+            report.json
